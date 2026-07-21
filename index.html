@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ค้นหารหัสสอบด้วยรหัสนักเรียน — เซนต์เทเรซาหนองจอก</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12203a;--ink-soft:#3a4a63;--muted:#7688a0;--line:#e2e7ef;
+    --bg:#f4f6fa;--card:#ffffff;--brand:#1f3a63;--brand-2:#2d5a9e;
+    --accent:#e08a2b;--accent-ink:#8a4d05;--ok:#178a5a;
+    --shadow:0 1px 2px rgba(18,32,58,.06),0 8px 24px rgba(18,32,58,.06);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:'Sarabun',system-ui,'Noto Sans Thai',sans-serif;background:var(--bg);
+    color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+  .wrap{max-width:720px;margin:0 auto;padding:20px 18px 90px}
+
+  header.top{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;
+    border-radius:18px;padding:20px 22px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  header.top::after{content:"";position:absolute;right:-40px;top:-60px;width:200px;height:200px;
+    background:radial-gradient(circle,rgba(224,138,43,.35),transparent 70%)}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#bcd0ee;font-weight:600}
+  header.top h1{margin:6px 0 2px;font-size:22px;font-weight:700}
+  header.top .sub{color:#cfe0f6;font-size:13.5px}
+  .org{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);
+    padding:9px 12px;border-radius:12px;position:relative;z-index:1}
+  .org .lab{font-size:12.5px;color:#cfe0f6}
+  .org .val{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:17px;letter-spacing:.06em}
+  .org button{border:none;background:rgba(255,255,255,.9);color:var(--brand);font-family:'Sarabun';
+    font-weight:600;font-size:13px;padding:5px 11px;border-radius:8px;cursor:pointer}
+  .org button:active{transform:translateY(1px)}
+
+  /* search */
+  .searchbox{margin:20px 0 6px;position:relative}
+  .searchbox svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  #q{width:100%;padding:16px 16px 16px 48px;border:2px solid var(--line);border-radius:14px;
+    background:var(--card);font-family:inherit;font-size:19px;color:var(--ink);box-shadow:var(--shadow)}
+  #q:focus{outline:none;border-color:var(--brand-2)}
+  #q::placeholder{color:#a9b6c8;font-size:16px}
+  .hint{font-size:13px;color:var(--muted);text-align:center;margin:4px 2px 0}
+  .count{font-size:13px;color:var(--muted);margin:14px 2px 8px;font-weight:600}
+
+  /* empty state */
+  .idle{text-align:center;padding:46px 16px 30px;color:var(--muted)}
+  .idle .big{font-size:52px;line-height:1;margin-bottom:14px}
+  .idle p{font-size:15px;margin:4px 0}
+  .idle .roomsline{margin-top:18px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+  .idle .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:5px 12px;font-size:13px;font-weight:600;color:var(--ink-soft)}
+
+  /* result cards */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 16px 14px;box-shadow:var(--shadow);margin-bottom:12px}
+  .card.single{border-color:var(--brand-2);border-width:2px}
+  .idrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px}
+  .idpill{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:#fff;
+    background:var(--accent);padding:2px 10px;border-radius:7px;letter-spacing:.04em}
+  .roompill{font-size:12.5px;font-weight:700;color:var(--brand);background:#eaf1fb;
+    padding:2px 10px;border-radius:7px}
+  .name{font-size:22px;font-weight:700;color:var(--ink);margin:6px 0 2px;letter-spacing:-.01em}
+  .metaline{font-size:13px;color:var(--muted);margin-bottom:12px}
+
+  .copyall{border:1px solid var(--accent);background:#fff7ed;color:var(--accent-ink);
+    font-family:inherit;font-size:13px;font-weight:700;padding:8px 12px;border-radius:9px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;width:100%;justify-content:center;margin-top:10px}
+  .copyall:hover{background:var(--accent);color:#fff}
+  .copyall:active{transform:translateY(1px)}
+
+  .field{margin-top:10px}
+  .flab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:3px}
+  .credrow{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);
+    border-radius:10px;padding:9px 9px 9px 13px}
+  .cred{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--ink);
+    letter-spacing:.02em;flex:1;word-break:break-all}
+  .cred .dig{text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:2px;text-decoration-color:var(--accent)}
+  .cbtn{flex:none;border:none;background:var(--brand);color:#fff;width:38px;height:36px;border-radius:9px;
+    cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:.12s}
+  .cbtn:hover{background:var(--brand-2)}
+  .cbtn:active{transform:translateY(1px)}
+  .cbtn.done{background:var(--ok)}
+
+  .noresult{text-align:center;color:var(--muted);padding:40px 16px;font-size:15px}
+
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;font-size:14px;font-weight:600;
+    box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.22s;z-index:50;
+    display:flex;align-items:center;gap:8px}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  footer{margin-top:22px;color:var(--muted);font-size:12.5px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">รหัสสอบออนไลน์ · 2026-07</div>
+    <h1>เซนต์เทเรซาหนองจอก · ม.5</h1>
+    <div class="sub">Oxford English Testing — ค้นด้วยรหัสประจำตัวนักเรียน</div>
+    <div class="org">
+      <span class="lab">Org ID (ใช้ร่วมกันทุกคน)</span>
+      <span class="val">103713</span>
+      <button onclick="copyText('103713',this,'คัดลอก Org ID แล้ว')">คัดลอก</button>
+    </div>
+  </header>
+
+  <div class="searchbox">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="q" type="text" inputmode="numeric" autocomplete="off" placeholder="พิมพ์รหัสประจำตัวนักเรียน…" autofocus>
+  </div>
+  <div class="hint">พิมพ์เลขประจำตัวนักเรียน (หรือชื่อ) แล้วระบบจะแสดงเฉพาะบัญชีของคนนั้น</div>
+
+  <div id="results"></div>
+
+  <footer>เลขในรหัสผ่านถูก <b>ขีดเส้นใต้</b> ไว้ให้สังเกตง่าย · ทุกครั้งโปรดตรวจ <b>ชื่อ</b> ให้ตรงก่อนคัดลอก</footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const ORG="103713";
+const STUDENTS=[{"sid": "14547", "name": "นายธีร์ธวัช อุ่นประชาศักดิ์", "cls": "ม.5/1", "room": "M5.1", "seat": 1, "user": "u15250704", "pw": "iSEepZuF"}, {"sid": "14553", "name": "นางสาวนภัสวรรณ สังสีแก้ว", "cls": "ม.5/1", "room": "M5.1", "seat": 2, "user": "u15250705", "pw": "roSqFxwi"}, {"sid": "14913", "name": "นางสาวนัฌชา เจริญวงษ์", "cls": "ม.5/1", "room": "M5.1", "seat": 3, "user": "u15250706", "pw": "oucT6kmZ"}, {"sid": "14962", "name": "นางสาวไอยวริญญ์ เชื้อวงศ์งาม", "cls": "ม.5/1", "room": "M5.1", "seat": 4, "user": "u15250707", "pw": "aZtygYaL"}, {"sid": "14973", "name": "นางสาวฐิติพร นาคขำ", "cls": "ม.5/1", "room": "M5.1", "seat": 5, "user": "u15250708", "pw": "w7Njbvuf"}, {"sid": "14979", "name": "นางสาวปวริศา ผินนอก", "cls": "ม.5/1", "room": "M5.1", "seat": 6, "user": "u15250709", "pw": "fnLL8FzM"}, {"sid": "14996", "name": "นางสาวลิปดา รักสลาม", "cls": "ม.5/1", "room": "M5.1", "seat": 7, "user": "u15250710", "pw": "pABuuvRx"}, {"sid": "15040", "name": "นางสาวกรกนก กลยาณีย์", "cls": "ม.5/1", "room": "M5.1", "seat": 8, "user": "u15250711", "pw": "FEDmMhXL"}, {"sid": "15045", "name": "นางสาวลัดดาวัลย์ เกตุขาว", "cls": "ม.5/1", "room": "M5.1", "seat": 9, "user": "u15250712", "pw": "dW5A7A3w"}, {"sid": "15058", "name": "นางสาวนงนภัส สะอาด", "cls": "ม.5/1", "room": "M5.1", "seat": 10, "user": "u15250713", "pw": "jadhvpJ8"}, {"sid": "15065", "name": "นางสาวศิริภัทร ประสพ", "cls": "ม.5/1", "room": "M5.1", "seat": 11, "user": "u15250714", "pw": "toawStsE"}, {"sid": "15085", "name": "นายณฐกฤตย์ ทับทิม", "cls": "ม.5/1", "room": "M5.1", "seat": 12, "user": "u15250715", "pw": "ynwLiRTC"}, {"sid": "15102", "name": "นางสาวกนกกร ประพัฒน์พรกุล", "cls": "ม.5/1", "room": "M5.1", "seat": 13, "user": "u15250716", "pw": "FctWdmeQ"}, {"sid": "15139", "name": "นางสาวกัญญาวีร์ พานทอง", "cls": "ม.5/1", "room": "M5.1", "seat": 14, "user": "u15250717", "pw": "WG9qrpmo"}, {"sid": "15152", "name": "นางสาวณีรนุช รุ่งเรือง", "cls": "ม.5/1", "room": "M5.1", "seat": 15, "user": "u15250718", "pw": "gjmf2yZq"}, {"sid": "15283", "name": "นางสาวชุติกาญจน์ ตังกิจ", "cls": "ม.5/1", "room": "M5.1", "seat": 16, "user": "u15250719", "pw": "LB9mk3fc"}, {"sid": "15450", "name": "นางสาวกชกร ลบหนองบัว", "cls": "ม.5/1", "room": "M5.1", "seat": 17, "user": "u15250720", "pw": "w6z36PkK"}, {"sid": "15474", "name": "นางสาวชุติกาญจน์ ขำค้างพลู", "cls": "ม.5/1", "room": "M5.1", "seat": 18, "user": "u15250721", "pw": "GgVDpGJH"}, {"sid": "15564", "name": "นายพงศกร สิงห์โต", "cls": "ม.5/1", "room": "M5.1", "seat": 19, "user": "u15250722", "pw": "fvaYW7uv"}, {"sid": "15858", "name": "นายพีรพัฒน์ โคพะทา", "cls": "ม.5/1", "room": "M5.1", "seat": 20, "user": "u15250723", "pw": "HEfoAJGv"}, {"sid": "16130", "name": "นางสาวณรัตน์ญพร จั่นเพ็ชร์", "cls": "ม.5/1", "room": "M5.1", "seat": 21, "user": "u15250724", "pw": "Dq7anNKM"}, {"sid": "16199", "name": "นางสาวศรันยา เสริมแสง", "cls": "ม.5/1", "room": "M5.1", "seat": 22, "user": "u15250725", "pw": "LLrdPjuo"}, {"sid": "16348", "name": "นายปัณณธร แสงสร้อย", "cls": "ม.5/1", "room": "M5.1", "seat": 23, "user": "u15250726", "pw": "oNYHvjUn"}, {"sid": "16399", "name": "นางสาวอารดา แสนสุข", "cls": "ม.5/1", "room": "M5.1", "seat": 24, "user": "u15250727", "pw": "Dom5SSvi"}, {"sid": "16408", "name": "นางสาวกฤตยา สีระกูล", "cls": "ม.5/1", "room": "M5.1", "seat": 25, "user": "u15250728", "pw": "SoQB7Xua"}, {"sid": "16416", "name": "นายนราวิชญ์ สาเห็ม", "cls": "ม.5/1", "room": "M5.1", "seat": 26, "user": "u15250729", "pw": "xr47DeD3"}, {"sid": "16421", "name": "นางสาวนงนภัส โชคขยายกิจ", "cls": "ม.5/1", "room": "M5.1", "seat": 27, "user": "u15250730", "pw": "d2w8eApQ"}, {"sid": "16430", "name": "นางสาวนฏกร วงษ์พิชิต", "cls": "ม.5/1", "room": "M5.1", "seat": 28, "user": "u15250731", "pw": "E3zWBoXE"}, {"sid": "16555", "name": "นายชัชภนภ์ ประจง", "cls": "ม.5/1", "room": "M5.1", "seat": 29, "user": "u15250732", "pw": "RvXUwJ2V"}, {"sid": "16581", "name": "นายกฤตพงศ์ จันทอง", "cls": "ม.5/1", "room": "M5.1", "seat": 30, "user": "u15250733", "pw": "jNWDdyuh"}, {"sid": "16641", "name": "นางสาวอณัฐชา พลาพล", "cls": "ม.5/1", "room": "M5.1", "seat": 31, "user": "u15250734", "pw": "4mB6hscN"}, {"sid": "17446", "name": "นางสาวณัฐวรา สีแสง", "cls": "ม.5/1", "room": "M5.1", "seat": 32, "user": "u15250735", "pw": "ihSCV5cM"}, {"sid": "17777", "name": "นางสาวภัทราวดี มีอำนาจ", "cls": "ม.5/1", "room": "M5.1", "seat": 33, "user": "u15250736", "pw": "SD4coewJ"}, {"sid": "17898", "name": "นายสุรทิน จิตบุตร", "cls": "ม.5/1", "room": "M5.1", "seat": 34, "user": "u15250737", "pw": "69jkrAoi"}, {"sid": "18167", "name": "นางสาวสุจารี รัศมีมารีย์", "cls": "ม.5/1", "room": "M5.1", "seat": 35, "user": "u15250738", "pw": "U7TTsvaj"}, {"sid": "18728", "name": "นางสาวศุภพิชชา พุ่มบุตร", "cls": "ม.5/1", "room": "M5.1", "seat": 36, "user": "u15250739", "pw": "DSvzEMBL"}, {"sid": "18853", "name": "นางสาวศิโรรัตน์ สมกำดัด", "cls": "ม.5/1", "room": "M5.1", "seat": 37, "user": "u15250740", "pw": "WoKcmkkU"}, {"sid": "18894", "name": "นางสาวไอริณ สถิรแพทย์", "cls": "ม.5/1", "room": "M5.1", "seat": 38, "user": "u15250741", "pw": "5PygmHXb"}, {"sid": "18930", "name": "นางสาวเหมือนฝัน สังเกตุ", "cls": "ม.5/1", "room": "M5.1", "seat": 39, "user": "u15250742", "pw": "WhWX9PBW"}, {"sid": "18943", "name": "นางสาวฐิติมา จันทรหอม", "cls": "ม.5/1", "room": "M5.1", "seat": 40, "user": "u15250743", "pw": "YcoLrfHE"}, {"sid": "19376", "name": "นายธีรณัฏฐ์ โมราณรงค์", "cls": "ม.5/1", "room": "M5.1", "seat": 41, "user": "u15250744", "pw": "Xet5PSAb"}, {"sid": "19567", "name": "นางสาวมาริสา จันทรรัศมี", "cls": "ม.5/1", "room": "M5.1", "seat": 42, "user": "u15250745", "pw": "o2FDXM7G"}, {"sid": "19957", "name": "นางสาวปภาวรินทร์ ธรรมพิสุทธิ์กุล", "cls": "ม.5/1", "room": "M5.1", "seat": 43, "user": "u15250746", "pw": "iWg59tim"}, {"sid": "20076", "name": "นางสาวทัศนวรรณ อู่พิทักษ์", "cls": "ม.5/1", "room": "M5.1", "seat": 44, "user": "u15250747", "pw": "eBFchviz"}, {"sid": "14948", "name": "นายทัชชกร แม้นมินทร์", "cls": "ม.5/2", "room": "M5.2", "seat": 1, "user": "u15250748", "pw": "RH6wqJnh"}, {"sid": "14974", "name": "นายชัชพงศ์ ทาคำวงศ์", "cls": "ม.5/2", "room": "M5.2", "seat": 2, "user": "u15250749", "pw": "jwBAaFcE"}, {"sid": "14982", "name": "นายเศรษฐวิชร์ พลขันธ์", "cls": "ม.5/2", "room": "M5.2", "seat": 3, "user": "u15250750", "pw": "gM8R9BCb"}, {"sid": "15015", "name": "นางสาวณัฐกานต์ พูลถนอมพร", "cls": "ม.5/2", "room": "M5.2", "seat": 4, "user": "u15250751", "pw": "8PpN5RKf"}, {"sid": "15093", "name": "นางสาวต้องใจ มีสัจจ์", "cls": "ม.5/2", "room": "M5.2", "seat": 5, "user": "u15250752", "pw": "LpGu5cSn"}, {"sid": "15101", "name": "นางสาวศุภนุช คำโม", "cls": "ม.5/2", "room": "M5.2", "seat": 6, "user": "u15250753", "pw": "oFcVURJp"}, {"sid": "15133", "name": "นายอภิชา เชยรัมย์", "cls": "ม.5/2", "room": "M5.2", "seat": 7, "user": "u15250754", "pw": "2LakV3EQ"}, {"sid": "15159", "name": "นางสาวพัชรพร วงษ์ใหญ่", "cls": "ม.5/2", "room": "M5.2", "seat": 8, "user": "u15250755", "pw": "kfVuW3ET"}, {"sid": "15324", "name": "นายภูตะวัน ฉิมใจงาม", "cls": "ม.5/2", "room": "M5.2", "seat": 9, "user": "u15250756", "pw": "u8YupYeR"}, {"sid": "15452", "name": "นางสาวอติญา บุญมี", "cls": "ม.5/2", "room": "M5.2", "seat": 10, "user": "u15250757", "pw": "GyGXFnht"}, {"sid": "15475", "name": "นายจีรวัฒน์ โรจน์แสงแก้ว", "cls": "ม.5/2", "room": "M5.2", "seat": 11, "user": "u15250758", "pw": "pFcTrZXS"}, {"sid": "15539", "name": "นายกรวิชญ์ หน่อสีดา", "cls": "ม.5/2", "room": "M5.2", "seat": 12, "user": "u15250759", "pw": "fyk8DZ6T"}, {"sid": "16281", "name": "นายกฤษณะ เอ่งฉ้วน", "cls": "ม.5/2", "room": "M5.2", "seat": 13, "user": "u15250760", "pw": "57h6DhNC"}, {"sid": "16406", "name": "นายอดิเทพ แสงอุทัย", "cls": "ม.5/2", "room": "M5.2", "seat": 14, "user": "u15250761", "pw": "YG3RJN4p"}, {"sid": "16419", "name": "นายธนกฤต ช้างแก้วมณี", "cls": "ม.5/2", "room": "M5.2", "seat": 15, "user": "u15250762", "pw": "TEbdzqSd"}, {"sid": "16504", "name": "นางสาวสุพิชญา ขอเชื่อมกลาง", "cls": "ม.5/2", "room": "M5.2", "seat": 16, "user": "u15250763", "pw": "2jfS4Zmq"}, {"sid": "16605", "name": "นายพุทธะ ชินบุตร", "cls": "ม.5/2", "room": "M5.2", "seat": 17, "user": "u15250764", "pw": "rKvkYnSc"}, {"sid": "16622", "name": "นายธีรภัทร มังเดชะ", "cls": "ม.5/2", "room": "M5.2", "seat": 18, "user": "u15250765", "pw": "zagA9iNW"}, {"sid": "16659", "name": "นางสาวกัญญาณัฐ พุดศรี", "cls": "ม.5/2", "room": "M5.2", "seat": 19, "user": "u15250766", "pw": "WrP8bYne"}, {"sid": "16730", "name": "นางสาวฟ้าใส ตรวจนอก", "cls": "ม.5/2", "room": "M5.2", "seat": 20, "user": "u15250767", "pw": "zerbqKZ3"}, {"sid": "17188", "name": "นางสาวสุมิตา สุขสวัสดิ์", "cls": "ม.5/2", "room": "M5.2", "seat": 21, "user": "u15250768", "pw": "kBtbyBhh"}, {"sid": "17329", "name": "นางสาวสู่ขวัญ แป้นมงคล", "cls": "ม.5/2", "room": "M5.2", "seat": 22, "user": "u15250769", "pw": "HGinkbAZ"}, {"sid": "17449", "name": "นายธนปกรณ์ ไข่มุกข์", "cls": "ม.5/2", "room": "M5.2", "seat": 23, "user": "u15250770", "pw": "ybgB7wZJ"}, {"sid": "17627", "name": "นางสาวสุชานาฎ ช้างดี", "cls": "ม.5/2", "room": "M5.2", "seat": 24, "user": "u15250771", "pw": "JokroKx4"}, {"sid": "18702", "name": "นางสาววิรมณ ยงพรประเสริฐ", "cls": "ม.5/2", "room": "M5.2", "seat": 25, "user": "u15250772", "pw": "4S8LibEs"}, {"sid": "18758", "name": "นางสาวแพรวพรรณ เตือนประเทศ", "cls": "ม.5/2", "room": "M5.2", "seat": 26, "user": "u15250773", "pw": "JhUu7M5i"}, {"sid": "18776", "name": "นางสาวสุดาภัทร เอมโอด", "cls": "ม.5/2", "room": "M5.2", "seat": 27, "user": "u15250774", "pw": "yHQScvgk"}, {"sid": "18807", "name": "นางสาวปิยธิดา ทาสีดำ", "cls": "ม.5/2", "room": "M5.2", "seat": 28, "user": "u15250775", "pw": "ixsTS8MC"}, {"sid": "18819", "name": "นางสาวฐิติมา พรมมา", "cls": "ม.5/2", "room": "M5.2", "seat": 29, "user": "u15250776", "pw": "6zuXAoQs"}, {"sid": "18830", "name": "นางสาวณิชกานต์ เพชรโยธา", "cls": "ม.5/2", "room": "M5.2", "seat": 30, "user": "u15250777", "pw": "sZf4kN3T"}, {"sid": "18846", "name": "นายธนวิชญ์ วิเศษสุด", "cls": "ม.5/2", "room": "M5.2", "seat": 31, "user": "u15250778", "pw": "kBtxgHJt"}, {"sid": "18876", "name": "นายพิพัฒน์ สกุลทอง", "cls": "ม.5/2", "room": "M5.2", "seat": 32, "user": "u15250779", "pw": "w6s34czH"}, {"sid": "18881", "name": "นางสาววิลาวรรณ บำรุงศรี", "cls": "ม.5/2", "room": "M5.2", "seat": 33, "user": "u15250780", "pw": "GUHXLkzf"}, {"sid": "18887", "name": "นางสาวสุชาดา เงินเจริญ", "cls": "ม.5/2", "room": "M5.2", "seat": 34, "user": "u15250781", "pw": "MzPsPwjX"}, {"sid": "19109", "name": "นางสาวธัญวรรณ วงษ์พนัส", "cls": "ม.5/2", "room": "M5.2", "seat": 35, "user": "u15250782", "pw": "xeeZHHFF"}, {"sid": "19136", "name": "นายพงษ์พิพัฒน์ ทองส่งโสม", "cls": "ม.5/2", "room": "M5.2", "seat": 36, "user": "u15250783", "pw": "DyWkk3A5"}, {"sid": "20145", "name": "นายอดิวิชญ์ ดีงาม", "cls": "ม.5/2", "room": "M5.2", "seat": 37, "user": "u15250784", "pw": "D7xnqctM"}, {"sid": "20155", "name": "นางสาวรมิตา สังข์วงษ์", "cls": "ม.5/2", "room": "M5.2", "seat": 38, "user": "u15250785", "pw": "doopQYkY"}, {"sid": "20182", "name": "นางสาวชนมน สะมาน", "cls": "ม.5/2", "room": "M5.2", "seat": 39, "user": "u15250786", "pw": "DFjgp8Mq"}, {"sid": "20305", "name": "นางสาวอริสา วงษ์ส้มจีน", "cls": "ม.5/2", "room": "M5.2", "seat": 40, "user": "u15250787", "pw": "3wdMsAUn"}, {"sid": "20334", "name": "นางสาวณัฐนิชา ศาลางาม", "cls": "ม.5/2", "room": "M5.2", "seat": 41, "user": "u15250788", "pw": "ndbs8d9U"}, {"sid": "20451", "name": "นายอิทธิกร บุญมาก", "cls": "ม.5/2", "room": "M5.2", "seat": 42, "user": "u15250789", "pw": "xzkG7CSp"}, {"sid": "20485", "name": "นายธนัญกร โชติบวรชัย", "cls": "ม.5/2", "room": "M5.2", "seat": 43, "user": "u15250790", "pw": "Muj9kGRa"}, {"sid": "20514", "name": "นางสาวปภัสสร โชคชื่น", "cls": "ม.5/2", "room": "M5.2", "seat": 44, "user": "u15250791", "pw": "XTUQDbiD"}, {"sid": "14889", "name": "นายธรรศ เจียวพ่วง", "cls": "ม.5/3", "room": "M5.3", "seat": 1, "user": "u15250792", "pw": "y424jkRA"}, {"sid": "14969", "name": "นายธิติสรณ์ รื่นสุคนธ์", "cls": "ม.5/3", "room": "M5.3", "seat": 2, "user": "u15250793", "pw": "WziVuMR9"}, {"sid": "15027", "name": "นายจุฑาพัชร เสงี่ยมพงษ์", "cls": "ม.5/3", "room": "M5.3", "seat": 3, "user": "u15250794", "pw": "HtHCKiMw"}, {"sid": "15030", "name": "นายปวีณพัชร พัฒนศิริสรวง", "cls": "ม.5/3", "room": "M5.3", "seat": 4, "user": "u15250795", "pw": "oaWr7Lxc"}, {"sid": "15039", "name": "นายอิทธิกร ขจิตวงศ์", "cls": "ม.5/3", "room": "M5.3", "seat": 5, "user": "u15250796", "pw": "bWigvA8S"}, {"sid": "15127", "name": "นายนภัสกร ลิเซ็น", "cls": "ม.5/3", "room": "M5.3", "seat": 6, "user": "u15250797", "pw": "8S6tb9Yi"}, {"sid": "15150", "name": "นางสาวปริญญากร พึ่งพา", "cls": "ม.5/3", "room": "M5.3", "seat": 7, "user": "u15250798", "pw": "cqwZcFwL"}, {"sid": "15167", "name": "นางสาวกัญญุตา ดาเก็ง", "cls": "ม.5/3", "room": "M5.3", "seat": 8, "user": "u15250799", "pw": "zAdgphhJ"}, {"sid": "15355", "name": "นายปิยวัฒน์ ดีชม", "cls": "ม.5/3", "room": "M5.3", "seat": 9, "user": "u15250800", "pw": "t7uWXdGs"}, {"sid": "15437", "name": "นางสาววิชญาดา โพธิกมล", "cls": "ม.5/3", "room": "M5.3", "seat": 10, "user": "u15250801", "pw": "ZxRucr7k"}, {"sid": "15487", "name": "นายไชยพงศ์ จันทร", "cls": "ม.5/3", "room": "M5.3", "seat": 11, "user": "u15250802", "pw": "oLFd9NUP"}, {"sid": "15547", "name": "นางสาวกัญญาภัทร สุดเวียง", "cls": "ม.5/3", "room": "M5.3", "seat": 12, "user": "u15250803", "pw": "MZbHRBWi"}, {"sid": "15561", "name": "นายอรรถโชติ ทับทิมทอง", "cls": "ม.5/3", "room": "M5.3", "seat": 13, "user": "u15250804", "pw": "5gzXHSCX"}, {"sid": "15895", "name": "นายวรรณธัช อำนวยกิจ", "cls": "ม.5/3", "room": "M5.3", "seat": 14, "user": "u15250805", "pw": "jJ722bgu"}, {"sid": "16178", "name": "นายภูริชญ์ ภูเมฆ", "cls": "ม.5/3", "room": "M5.3", "seat": 15, "user": "u15250806", "pw": "GrJPZLzY"}, {"sid": "16379", "name": "นายจิรพนธ์ เบญจรัตนาภรณ์", "cls": "ม.5/3", "room": "M5.3", "seat": 16, "user": "u15250807", "pw": "mcFQqV77"}, {"sid": "16500", "name": "นางสาวปณิชา พุฒซ้อน", "cls": "ม.5/3", "room": "M5.3", "seat": 17, "user": "u15250808", "pw": "EgXKoM46"}, {"sid": "16513", "name": "นายภูผา วงศ์นอก", "cls": "ม.5/3", "room": "M5.3", "seat": 18, "user": "u15250809", "pw": "mNN6e3QZ"}, {"sid": "16587", "name": "นายธนทัต เซ็งเมาะห์", "cls": "ม.5/3", "room": "M5.3", "seat": 19, "user": "u15250810", "pw": "8WhrU6MJ"}, {"sid": "16671", "name": "นางสาวธนัญญา มลารัตน์", "cls": "ม.5/3", "room": "M5.3", "seat": 20, "user": "u15250811", "pw": "6rAG4iu4"}, {"sid": "16859", "name": "นายอัครวินท์ พวงประดิษฐ์", "cls": "ม.5/3", "room": "M5.3", "seat": 21, "user": "u15250812", "pw": "QsoQb94F"}, {"sid": "17172", "name": "นายภัทรพล ภัทรบูชา", "cls": "ม.5/3", "room": "M5.3", "seat": 22, "user": "u15250813", "pw": "ppnrkWJZ"}, {"sid": "17732", "name": "นายสมพงศ์ เพชรเจริญตระกูล", "cls": "ม.5/3", "room": "M5.3", "seat": 23, "user": "u15250814", "pw": "6tzVDcqP"}, {"sid": "18194", "name": "นายธีระเดช คำสาร", "cls": "ม.5/3", "room": "M5.3", "seat": 24, "user": "u15250815", "pw": "WoRq7o8H"}, {"sid": "18645", "name": "นายเจศฎาพร ประทุมวงค์", "cls": "ม.5/3", "room": "M5.3", "seat": 25, "user": "u15250816", "pw": "VCzjj8Az"}, {"sid": "18739", "name": "นางสาวธีร์ภัสวรรณ รอดเจริญพันธ์", "cls": "ม.5/3", "room": "M5.3", "seat": 26, "user": "u15250817", "pw": "jAZrwG2v"}, {"sid": "18760", "name": "นายธนณ์เทพ กาญจนอนันต์", "cls": "ม.5/3", "room": "M5.3", "seat": 27, "user": "u15250818", "pw": "yPhSRmYw"}, {"sid": "18857", "name": "นายอัครวินท์ ไกยครุฑ", "cls": "ม.5/3", "room": "M5.3", "seat": 28, "user": "u15250819", "pw": "LewjnymA"}, {"sid": "18897", "name": "นายณัฐภูมิ พรหมเหลา", "cls": "ม.5/3", "room": "M5.3", "seat": 29, "user": "u15250820", "pw": "83MQmRXG"}, {"sid": "18965", "name": "นายวริธิกรณ์ วุฒิภากุล", "cls": "ม.5/3", "room": "M5.3", "seat": 30, "user": "u15250821", "pw": "h4R9ij93"}, {"sid": "18970", "name": "นายชนะวิชญ์ ปัญญาเลิศวัชร์", "cls": "ม.5/3", "room": "M5.3", "seat": 31, "user": "u15250822", "pw": "ZVRotzyk"}, {"sid": "19653", "name": "นายนภัสกร เกตุเลขา", "cls": "ม.5/3", "room": "M5.3", "seat": 32, "user": "u15250823", "pw": "CHiFV3SC"}, {"sid": "20257", "name": "นางสาวเจติยา วันสืบ", "cls": "ม.5/3", "room": "M5.3", "seat": 33, "user": "u15250824", "pw": "oR3bpPNg"}, {"sid": "20339", "name": "นางสาวนันทิชา คำมา", "cls": "ม.5/3", "room": "M5.3", "seat": 34, "user": "u15250825", "pw": "atXEoBMi"}, {"sid": "20513", "name": "นายจันทร์ดี สุไมรยา", "cls": "ม.5/3", "room": "M5.3", "seat": 35, "user": "u15250826", "pw": "tiAtweMB"}, {"sid": "14633", "name": "นางสาวณภัค ศิริไกร", "cls": "ม.5/4", "room": "M5.4", "seat": 1, "user": "u15250827", "pw": "SQt4rruD"}, {"sid": "14826", "name": "นายธนภูมิ พนมเริงศักดิ์", "cls": "ม.5/4", "room": "M5.4", "seat": 2, "user": "u15250828", "pw": "uj7hTSJU"}, {"sid": "14963", "name": "นายภูริณัฐ ทัพพ์จิตติ", "cls": "ม.5/4", "room": "M5.4", "seat": 3, "user": "u15250829", "pw": "XyK7YBAo"}, {"sid": "14981", "name": "นางสาวพราวผกา เอมกลาง", "cls": "ม.5/4", "room": "M5.4", "seat": 4, "user": "u15250830", "pw": "XtajzS2N"}, {"sid": "15008", "name": "นายศุภกฤต คล้ายแก้ว", "cls": "ม.5/4", "room": "M5.4", "seat": 5, "user": "u15250831", "pw": "Qjeds9ir"}, {"sid": "15009", "name": "นางสาวพัทธนันท์ สุขเกษม", "cls": "ม.5/4", "room": "M5.4", "seat": 6, "user": "u15250832", "pw": "tj75XZY7"}, {"sid": "15035", "name": "นางสาวปราณณิชา โสดาวัตร", "cls": "ม.5/4", "room": "M5.4", "seat": 7, "user": "u15250833", "pw": "9j9ACU2i"}, {"sid": "15059", "name": "นางสาวราเซียร์ แดงโกเมน", "cls": "ม.5/4", "room": "M5.4", "seat": 8, "user": "u15250834", "pw": "Y2kEwjRZ"}, {"sid": "15107", "name": "นายชนินทร นพคุณ", "cls": "ม.5/4", "room": "M5.4", "seat": 9, "user": "u15250835", "pw": "3hj7S3C5"}, {"sid": "15153", "name": "นางสาวจิรฐา สายพงค์", "cls": "ม.5/4", "room": "M5.4", "seat": 10, "user": "u15250836", "pw": "Ly7cPgzm"}, {"sid": "15397", "name": "นายชนกันต์ ขุนสอาด", "cls": "ม.5/4", "room": "M5.4", "seat": 11, "user": "u15250837", "pw": "JvDpBaY5"}, {"sid": "15434", "name": "นายภัทรพล นนทมา", "cls": "ม.5/4", "room": "M5.4", "seat": 12, "user": "u15250838", "pw": "k8rMrGSk"}, {"sid": "15436", "name": "นายเทพาธิป โพธิไชยแสน", "cls": "ม.5/4", "room": "M5.4", "seat": 13, "user": "u15250839", "pw": "dzSecdqA"}, {"sid": "15665", "name": "นายภูมิรพี ดิษฐ์นุ้ย", "cls": "ม.5/4", "room": "M5.4", "seat": 14, "user": "u15250840", "pw": "Xc9wjfYh"}, {"sid": "15711", "name": "นายภูผา ดีนอก", "cls": "ม.5/4", "room": "M5.4", "seat": 15, "user": "u15250841", "pw": "XJttRjpw"}, {"sid": "15813", "name": "นายนราวิชญ์ บวรสกุลวาณิช", "cls": "ม.5/4", "room": "M5.4", "seat": 16, "user": "u15250842", "pw": "cgLF6nb2"}, {"sid": "16304", "name": "นางสาวชนกานต์ เริงฮัง", "cls": "ม.5/4", "room": "M5.4", "seat": 17, "user": "u15250843", "pw": "6pzKRHGf"}, {"sid": "16364", "name": "นางสาวสร้อยสลา เหลืองสฤษดิ์", "cls": "ม.5/4", "room": "M5.4", "seat": 18, "user": "u15250844", "pw": "7VWw5yKz"}, {"sid": "16466", "name": "นายจิรเมธ เลาะเมาะ", "cls": "ม.5/4", "room": "M5.4", "seat": 19, "user": "u15250845", "pw": "xnJ6TdvC"}, {"sid": "16478", "name": "นายญาณากร จันทะ", "cls": "ม.5/4", "room": "M5.4", "seat": 20, "user": "u15250846", "pw": "wiEyCR4A"}, {"sid": "16523", "name": "นางสาวชนกนาถ ศิริเทพทรงกลด", "cls": "ม.5/4", "room": "M5.4", "seat": 21, "user": "u15250847", "pw": "sbPNkP98"}, {"sid": "16561", "name": "นางสาวพิลดา ชาดี", "cls": "ม.5/4", "room": "M5.4", "seat": 22, "user": "u15250848", "pw": "srBWMiJB"}, {"sid": "16855", "name": "นางสาวพิมพ์วลัญช์ วัลยนก", "cls": "ม.5/4", "room": "M5.4", "seat": 23, "user": "u15250849", "pw": "oTzpdS6v"}, {"sid": "17076", "name": "นางสาวรติมา มอญปาน", "cls": "ม.5/4", "room": "M5.4", "seat": 24, "user": "u15250850", "pw": "R3kJ79E7"}, {"sid": "17416", "name": "นายชวิศ น่วมชุ่ม", "cls": "ม.5/4", "room": "M5.4", "seat": 25, "user": "u15250851", "pw": "yxQ2fW6n"}, {"sid": "18718", "name": "นายศิวเทพ จี่เทศ", "cls": "ม.5/4", "room": "M5.4", "seat": 26, "user": "u15250852", "pw": "uiQu5mmg"}, {"sid": "18766", "name": "นางสาววาสินี สอนนนฐี", "cls": "ม.5/4", "room": "M5.4", "seat": 27, "user": "u15250853", "pw": "SapcUUrc"}, {"sid": "18796", "name": "นางสาวพิชญฎา ทองเสวตร", "cls": "ม.5/4", "room": "M5.4", "seat": 28, "user": "u15250854", "pw": "7mt6DKXS"}, {"sid": "18801", "name": "นางสาวชนัญญา ฤทธิเดช", "cls": "ม.5/4", "room": "M5.4", "seat": 29, "user": "u15250855", "pw": "w3BkHnrg"}, {"sid": "18845", "name": "นายธนาธิป วิเศษสุด", "cls": "ม.5/4", "room": "M5.4", "seat": 30, "user": "u15250856", "pw": "jouMb6Aj"}, {"sid": "18878", "name": "นางสาวอธิชา สาทประสิทธิ์", "cls": "ม.5/4", "room": "M5.4", "seat": 31, "user": "u15250857", "pw": "bYtXWYRe"}, {"sid": "18900", "name": "นายรติบดี ยะสาธะโรกุล", "cls": "ม.5/4", "room": "M5.4", "seat": 32, "user": "u15250858", "pw": "SCh5o4uv"}, {"sid": "18935", "name": "นายภูมิกฤฏิ์ ตามศรี", "cls": "ม.5/4", "room": "M5.4", "seat": 33, "user": "u15250859", "pw": "PbbcSRMC"}, {"sid": "18973", "name": "นายณัชพล แพงสมสนุก", "cls": "ม.5/4", "room": "M5.4", "seat": 34, "user": "u15250860", "pw": "ytiWRU9z"}, {"sid": "18977", "name": "นางสาวจิณห์นิภา มีจันทร์", "cls": "ม.5/4", "room": "M5.4", "seat": 35, "user": "u15250861", "pw": "wDVKJ6yN"}, {"sid": "19036", "name": "นางสาวธัญวรัตน์ จันทร์ทองม่วง", "cls": "ม.5/4", "room": "M5.4", "seat": 36, "user": "u15250862", "pw": "pbho4PGM"}, {"sid": "19956", "name": "นายอิทธิพล บ่อคาวี", "cls": "ม.5/4", "room": "M5.4", "seat": 37, "user": "u15250863", "pw": "9v2mE2eZ"}, {"sid": "20314", "name": "นางสาวพลอยชมพู เจิมรุ่งเจริญ", "cls": "ม.5/4", "room": "M5.4", "seat": 38, "user": "u15250864", "pw": "TYzuuK9X"}, {"sid": "14965", "name": "นางสาวพิมพ์พิศา ซูแสวงทรัพย์", "cls": "ม.5/5", "room": "M5.5", "seat": 1, "user": "u15250865", "pw": "Y9Wy7zJG"}, {"sid": "14968", "name": "นางสาวสุดาภัทร วรอินทร์", "cls": "ม.5/5", "room": "M5.5", "seat": 2, "user": "u15250866", "pw": "CqJpMFrQ"}, {"sid": "14971", "name": "นางสาวกรฎา บุญเพชร", "cls": "ม.5/5", "room": "M5.5", "seat": 3, "user": "u15250867", "pw": "RPF28eP7"}, {"sid": "14976", "name": "นางสาวปภาวรินทร์ พินิจมนตรี", "cls": "ม.5/5", "room": "M5.5", "seat": 4, "user": "u15250868", "pw": "eYvkaCFi"}, {"sid": "15022", "name": "นางสาวกัลยกร ขาวงาม", "cls": "ม.5/5", "room": "M5.5", "seat": 5, "user": "u15250869", "pw": "KbYLzaCB"}, {"sid": "15038", "name": "นางสาวจิดาภา พานิชพัฒน์", "cls": "ม.5/5", "room": "M5.5", "seat": 6, "user": "u15250870", "pw": "o5aPV6Jj"}, {"sid": "15124", "name": "นางสาวอภิสริญ ธีระชิต", "cls": "ม.5/5", "room": "M5.5", "seat": 7, "user": "u15250871", "pw": "jQ4NBdVi"}, {"sid": "15136", "name": "นางสาวพัทธ์ธีรา เสาว์แก้ว", "cls": "ม.5/5", "room": "M5.5", "seat": 8, "user": "u15250872", "pw": "55UoqbXf"}, {"sid": "15158", "name": "นางสาวนานา หัวนอน", "cls": "ม.5/5", "room": "M5.5", "seat": 9, "user": "u15250873", "pw": "m8ZEQfLX"}, {"sid": "15320", "name": "นางสาวพิชญาภา ศรีสังเวช", "cls": "ม.5/5", "room": "M5.5", "seat": 10, "user": "u15250874", "pw": "SGCzfY8k"}, {"sid": "15333", "name": "นายจิระพัฒน์ โรจนพร", "cls": "ม.5/5", "room": "M5.5", "seat": 11, "user": "u15250875", "pw": "uezFGX5w"}, {"sid": "15501", "name": "นางสาวรัตนาพร ไวจำปา", "cls": "ม.5/5", "room": "M5.5", "seat": 12, "user": "u15250876", "pw": "BGGFe9eG"}, {"sid": "15790", "name": "นางสาวณกรชนก บิฮารี", "cls": "ม.5/5", "room": "M5.5", "seat": 13, "user": "u15250877", "pw": "cbJ6MHvW"}, {"sid": "16014", "name": "นางสาวชนิกานต์ อักษรนิตย์", "cls": "ม.5/5", "room": "M5.5", "seat": 14, "user": "u15250878", "pw": "X22oGPRV"}, {"sid": "16349", "name": "นายธนดล คชภูมิ", "cls": "ม.5/5", "room": "M5.5", "seat": 15, "user": "u15250879", "pw": "8Ejygztj"}, {"sid": "16458", "name": "นางสาวกันติชา แก้วหนองสังข์", "cls": "ม.5/5", "room": "M5.5", "seat": 16, "user": "u15250880", "pw": "LwGfSWSK"}, {"sid": "16502", "name": "นางสาวสุทธิลักณ์ บุญจุ้ยธนวิสิฐ", "cls": "ม.5/5", "room": "M5.5", "seat": 17, "user": "u15250881", "pw": "WgX7nV7f"}, {"sid": "16564", "name": "นายศักดิ์สิทธิ์ มากมี", "cls": "ม.5/5", "room": "M5.5", "seat": 18, "user": "u15250882", "pw": "tLUKXet8"}, {"sid": "16566", "name": "นางสาวศรัณย์ภัทร เกษร", "cls": "ม.5/5", "room": "M5.5", "seat": 19, "user": "u15250883", "pw": "Soksqyjg"}, {"sid": "16568", "name": "นางสาวณัฐนิชา ใจหาญ", "cls": "ม.5/5", "room": "M5.5", "seat": 20, "user": "u15250884", "pw": "8wWEsUNr"}, {"sid": "16576", "name": "นายปกรณ์ ฮักกลอาดำ", "cls": "ม.5/5", "room": "M5.5", "seat": 21, "user": "u15250885", "pw": "p2P8z3Nk"}, {"sid": "17149", "name": "นายพันธวีร์ บินอับดุลเลาะ", "cls": "ม.5/5", "room": "M5.5", "seat": 22, "user": "u15250886", "pw": "He826etS"}, {"sid": "17844", "name": "นายพีรเดช พะเนตรัมย์", "cls": "ม.5/5", "room": "M5.5", "seat": 23, "user": "u15250887", "pw": "sgp5phsS"}, {"sid": "18617", "name": "นางสาวศิริญญ์ ศิริเวช", "cls": "ม.5/5", "room": "M5.5", "seat": 24, "user": "u15250888", "pw": "6Zqbz4bp"}, {"sid": "18712", "name": "นางสาวพรธีรา น่วมภักดี", "cls": "ม.5/5", "room": "M5.5", "seat": 25, "user": "u15250889", "pw": "LdaA8cNA"}, {"sid": "18752", "name": "นางสาวณัชชา ลายลักษณ์", "cls": "ม.5/5", "room": "M5.5", "seat": 26, "user": "u15250890", "pw": "ZuXUv7P8"}, {"sid": "18759", "name": "นายชนชนม์ คุ้มทรัพย์", "cls": "ม.5/5", "room": "M5.5", "seat": 27, "user": "u15250891", "pw": "6DNRTeTx"}, {"sid": "18851", "name": "นางสาวชลลดา ซอเฮาะ", "cls": "ม.5/5", "room": "M5.5", "seat": 28, "user": "u15250892", "pw": "3SyX6LBi"}, {"sid": "18945", "name": "นางสาวจุฬา เลิศวัฒนาสมบัติ", "cls": "ม.5/5", "room": "M5.5", "seat": 29, "user": "u15250893", "pw": "dE9C3bje"}, {"sid": "20157", "name": "นางสาววรรณภา สุดวิลัย", "cls": "ม.5/5", "room": "M5.5", "seat": 30, "user": "u15250894", "pw": "HLmxtzNi"}, {"sid": "20353", "name": "นางสาวจริยา ตั๊นงาม", "cls": "ม.5/5", "room": "M5.5", "seat": 31, "user": "u15250895", "pw": "Rzy2S8h6"}, {"sid": "20410", "name": "นางสาวอักษราภัค ธรรมไพโรจน์", "cls": "ม.5/5", "room": "M5.5", "seat": 32, "user": "u15250896", "pw": "xeXP49VD"}, {"sid": "20500", "name": "นางสาวรดาณัฐ พิมศร", "cls": "ม.5/5", "room": "M5.5", "seat": 33, "user": "u15250897", "pw": "tcpDqj24"}, {"sid": "20507", "name": "นางสาวปณิชา ถาวรธนิตกุล", "cls": "ม.5/5", "room": "M5.5", "seat": 34, "user": "u15250898", "pw": "S5rgXzMy"}, {"sid": "20517", "name": "นางสาวอธิชา ช่องโก้", "cls": "ม.5/5", "room": "M5.5", "seat": 35, "user": "u15250899", "pw": "XmKZ9kM7"}, {"sid": "20542", "name": "นายกิตติวัฒน์ สุธรรม", "cls": "ม.5/5", "room": "M5.5", "seat": 36, "user": "u15250900", "pw": "tb2XqiUk"}];
+const resultsEl=document.getElementById('results');
+const qEl=document.getElementById('q');
+
+function markDigits(s){return s.replace(/[0-9]/g,d=>'<span class="dig">'+d+'</span>');}
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function copyIcon(){return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';}
+function checkIcon(){return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';}
+
+function idleState(){
+  const counts={};
+  STUDENTS.forEach(s=>counts[s.room]=(counts[s.room]||0)+1);
+  const chips=Object.keys(counts).sort().map(r=>`<span class="chip">${r} · ${counts[r]} คน</span>`).join('');
+  resultsEl.innerHTML=`<div class="idle">
+    <div class="big">🔎</div>
+    <p>ยังไม่ได้ค้นหา</p>
+    <p>พิมพ์รหัสประจำตัวนักเรียนในช่องด้านบนเพื่อเริ่ม</p>
+    <div class="roomsline">${chips}</div>
+  </div>`;
+}
+
+function render(list, q){
+  if(list.length===0){
+    resultsEl.innerHTML=`<div class="noresult">ไม่พบนักเรียนที่ตรงกับ “${esc(q)}”<br><span style="font-size:13px">ลองตรวจตัวเลขอีกครั้ง หรือพิมพ์ชื่อ</span></div>`;
+    return;
+  }
+  const single = list.length===1;
+  let head=`<div class="count">พบ ${list.length} คน${single?'':' — พิมพ์รหัสให้ครบเพื่อให้เหลือคนเดียว'}</div>`;
+  const cards=list.map(s=>{
+    const meta=`ชั้น ${esc(s.cls)} · เลขที่ ${s.seat} · ห้อง ${s.room}`;
+    return `<div class="card${single?' single':''}">
+      <div class="idrow">
+        <span class="idpill">รหัส ${esc(s.sid)}</span>
+        <span class="roompill">${s.room}</span>
+      </div>
+      <div class="name">${esc(s.name)}</div>
+      <div class="metaline">${meta}</div>
+      <div class="field">
+        <div class="flab">Username</div>
+        <div class="credrow">
+          <span class="cred">${markDigits(esc(s.user))}</span>
+          <button class="cbtn" title="คัดลอก username" onclick='copyText(${JSON.stringify(s.user)},this,"คัดลอก username แล้ว")'>${copyIcon()}</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="flab">Password</div>
+        <div class="credrow">
+          <span class="cred">${markDigits(esc(s.pw))}</span>
+          <button class="cbtn" title="คัดลอก password" onclick='copyText(${JSON.stringify(s.pw)},this,"คัดลอก password แล้ว")'>${copyIcon()}</button>
+        </div>
+      </div>
+      <button class="copyall" onclick='copyAll(${JSON.stringify(s.user)},${JSON.stringify(s.pw)},this)'>
+        ${copyIcon()} คัดลอกทั้งหมด (user · pass · Org ID)
+      </button>
+    </div>`;
+  }).join('');
+  resultsEl.innerHTML=head+cards;
+}
+
+function search(){
+  const raw=qEl.value.trim();
+  if(!raw){idleState();return;}
+  const q=raw.toLowerCase();
+  const isNum=/^[0-9]+$/.test(raw);
+  let list;
+  if(isNum){
+    // student ID match: prefix first, then contains
+    const pref=STUDENTS.filter(s=>s.sid.startsWith(raw));
+    list = pref.length?pref:STUDENTS.filter(s=>s.sid.includes(raw));
+  }else{
+    list=STUDENTS.filter(s=>s.name.toLowerCase().includes(q)||s.user.toLowerCase().includes(q));
+  }
+  list=list.slice(0,30);
+  render(list, raw);
+}
+qEl.addEventListener('input', search);
+
+/* clipboard */
+async function toClipboard(text){
+  try{await navigator.clipboard.writeText(text);return true;}
+  catch(e){
+    const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();let ok=false;
+    try{ok=document.execCommand('copy');}catch(_){}
+    document.body.removeChild(ta);return ok;
+  }
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.innerHTML=checkIcon()+'<span>'+msg+'</span>';
+  t.classList.add('show');clearTimeout(t._t);
+  t._t=setTimeout(()=>t.classList.remove('show'),1500);
+}
+async function copyText(text,btn,msg){
+  const ok=await toClipboard(text);
+  if(ok){
+    if(btn&&btn.classList.contains('cbtn')){
+      const o=btn.innerHTML;btn.innerHTML=checkIcon();btn.classList.add('done');
+      setTimeout(()=>{btn.innerHTML=o;btn.classList.remove('done');},1200);
+    }
+    toast(msg||'คัดลอกแล้ว');
+  }else toast('คัดลอกไม่สำเร็จ');
+}
+async function copyAll(user,pass,btn){
+  const block=`Username: ${user}\nPassword: ${pass}\nOrg ID: ${ORG}`;
+  const ok=await toClipboard(block);
+  if(ok){const o=btn.innerHTML;btn.innerHTML=checkIcon()+' คัดลอกแล้ว';setTimeout(()=>btn.innerHTML=o,1200);
+    toast('คัดลอก user · pass · Org ID แล้ว');}
+  else toast('คัดลอกไม่สำเร็จ');
+}
+
+idleState();
+</script>
+</body>
+</html>

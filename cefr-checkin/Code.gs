@@ -3,10 +3,14 @@ const STUDENT_SHEET = 'STUDENTS';
 const CHECKIN_SHEET = 'CHECKIN';
 const SETTINGS_SHEET = 'SETTINGS';
 const TZ = 'Asia/Bangkok';
+const TEACHER_PIN = '1234';
 
 function doGet(e) {
-  const action = String((e && e.parameter && e.parameter.action) || '').toLowerCase();
-  if (action === 'lookup') return json_(lookup_(String(e.parameter.studentId || '').trim()));
+  const p = (e && e.parameter) || {};
+  const action = String(p.action || '').toLowerCase();
+  if (action === 'lookup') return json_(lookup_(String(p.studentId || '').trim()));
+  if (action === 'adminsummary') return json_(adminSummary_(String(p.pin || '')));
+  if (action === 'adminroom') return json_(adminRoom_(String(p.pin || ''), String(p.room || ''), String(p.period || 'MORNING'), String(p.status || 'ALL')));
   return json_({ ok: true, service: 'M.5 CEFR Prep Check-in 2569' });
 }
 
@@ -71,30 +75,90 @@ function checkin_(studentId, payload) {
   }
 }
 
-function findStudent_(studentId) {
+function adminSummary_(pin) {
+  if (pin !== TEACHER_PIN) return {ok:false,message:'รหัสสำหรับครูไม่ถูกต้อง'};
+  const students = getAllStudents_();
+  const logs = getAllCheckins_();
+  const morning = new Set(logs.filter(x=>x.period==='MORNING').map(x=>x.studentId));
+  const afternoon = new Set(logs.filter(x=>x.period==='AFTERNOON').map(x=>x.studentId));
+  const roomMap = {};
+  students.forEach(s=>{
+    if(!roomMap[s.room]) roomMap[s.room] = {room:s.room,total:0,morning:0,afternoon:0};
+    roomMap[s.room].total++;
+    if(morning.has(s.studentId)) roomMap[s.room].morning++;
+    if(afternoon.has(s.studentId)) roomMap[s.room].afternoon++;
+  });
+  return {
+    ok:true,
+    total:students.length,
+    morning:morning.size,
+    afternoon:afternoon.size,
+    rooms:Object.keys(roomMap).sort((a,b)=>Number(a)-Number(b)).map(k=>roomMap[k]),
+    updatedAt:Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm:ss')
+  };
+}
+
+function adminRoom_(pin, room, period, status) {
+  if (pin !== TEACHER_PIN) return {ok:false,message:'รหัสสำหรับครูไม่ถูกต้อง'};
+  period = period === 'AFTERNOON' ? 'AFTERNOON' : 'MORNING';
+  status = ['CHECKED','UNCHECKED'].indexOf(status) >= 0 ? status : 'ALL';
+  const students = getAllStudents_().filter(s=>String(s.room)===String(room));
+  const logs = getAllCheckins_().filter(x=>x.period===period);
+  const logMap = {};
+  logs.forEach(x=>{ if(!logMap[x.studentId]) logMap[x.studentId]=x; });
+  let list = students.map(s=>({
+    studentId:s.studentId,
+    name:s.name,
+    classRoom:s.classRoom,
+    room:s.room,
+    no:s.no,
+    checked:!!logMap[s.studentId],
+    checkedTime:logMap[s.studentId] ? logMap[s.studentId].time : ''
+  }));
+  if(status==='CHECKED') list=list.filter(x=>x.checked);
+  if(status==='UNCHECKED') list=list.filter(x=>!x.checked);
+  list.sort((a,b)=>(Number(a.no)||999)-(Number(b.no)||999));
+  return {
+    ok:true,
+    room:String(room),
+    period,
+    periodLabel:period==='MORNING'?'รอบเช้า':'รอบบ่าย',
+    status,
+    total:students.length,
+    checked:students.filter(s=>!!logMap[s.studentId]).length,
+    unchecked:students.filter(s=>!logMap[s.studentId]).length,
+    students:list
+  };
+}
+
+function getAllStudents_() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sh = ss.getSheetByName(STUDENT_SHEET);
-  if (!sh || sh.getLastRow() < 2) return null;
+  if (!sh || sh.getLastRow() < 2) return [];
   const values = sh.getRange(2,1,sh.getLastRow()-1,8).getDisplayValues();
-  for (const r of values) {
-    if (String(r[0]).trim() === studentId && String(r[7]).toUpperCase() !== 'FALSE') {
-      const name = [r[1],r[2],r[3]].filter(Boolean).join('');
-      const classRoom = r[5] ? `${r[4]}/${r[5]}` : r[4];
-      return {studentId:r[0],name,classRoom,no:r[6]};
-    }
-  }
-  return null;
+  return values.filter(r=>String(r[0]).trim() && String(r[7]).toUpperCase() !== 'FALSE').map(r=>{
+    const name=[r[1],r[2],r[3]].filter(Boolean).join('');
+    const classRoom=r[5]?`${r[4]}/${r[5]}`:r[4];
+    return {studentId:String(r[0]).trim(),name,classRoom,room:String(r[5]).trim(),no:String(r[6]).trim()};
+  });
+}
+
+function getAllCheckins_() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sh = ss.getSheetByName(CHECKIN_SHEET);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2,1,sh.getLastRow()-1,12).getDisplayValues().map(r=>({
+    studentId:String(r[1]).trim(),period:String(r[5]).trim(),time:String(r[8]).trim(),classRoom:String(r[3]).trim()
+  })).filter(x=>x.studentId && x.period);
+}
+
+function findStudent_(studentId) {
+  return getAllStudents_().find(s=>s.studentId===studentId) || null;
 }
 
 function findCheckin_(studentId, periodKey) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sh = ss.getSheetByName(CHECKIN_SHEET);
-  if (!sh || sh.getLastRow() < 2) return null;
-  const values = sh.getRange(2,1,sh.getLastRow()-1,12).getDisplayValues();
-  for (const r of values) {
-    if (String(r[1]).trim() === studentId && String(r[5]).trim() === periodKey) return {time:r[8] || ''};
-  }
-  return null;
+  const found = getAllCheckins_().find(x=>x.studentId===studentId && x.period===periodKey);
+  return found ? {time:found.time || ''} : null;
 }
 
 function getCurrentPeriod_() {

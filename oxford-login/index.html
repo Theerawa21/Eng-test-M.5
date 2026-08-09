@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f4c81">
+  <title>ระบบค้นหารหัสสอบออนไลน์ | Saint Theresa School</title>
+  <meta name="description" content="ระบบค้นหา Username และ Password สำหรับ Oxford English Testing นักเรียนชั้นมัธยมศึกษาปีที่ 5 โรงเรียนเซนต์เทเรซา หนองจอก">
+  <style>
+    :root {
+      --primary: #0f4c81;
+      --primary-2: #1677c8;
+      --primary-soft: #eaf4ff;
+      --bg: #f4f8fc;
+      --surface: #ffffff;
+      --text: #17324d;
+      --muted: #6f8191;
+      --border: #d9e5ef;
+      --success: #087443;
+      --success-soft: #ecfdf3;
+      --danger: #b42318;
+      --danger-soft: #fff1f0;
+      --shadow: 0 20px 55px rgba(31, 75, 111, .12);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans Thai", "Sarabun", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(22,119,200,.12), transparent 32%),
+        linear-gradient(180deg, #edf6ff 0%, #f8fbff 48%, #ffffff 100%);
+    }
+
+    button, input, a { font: inherit; }
+
+    .page {
+      width: min(100% - 28px, 620px);
+      margin: 0 auto;
+      padding: 34px 0 max(34px, env(safe-area-inset-bottom));
+    }
+
+    .brand { text-align: center; margin-bottom: 22px; }
+
+    .brand-mark {
+      width: 74px;
+      height: 74px;
+      border-radius: 22px;
+      margin: 0 auto 15px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 14px 34px rgba(15,76,129,.22);
+    }
+
+    .brand-mark svg { width: 35px; height: 35px; }
+    h1 { margin: 0; font-size: clamp(23px, 5.5vw, 31px); line-height: 1.25; letter-spacing: -.4px; }
+    .school { margin-top: 7px; color: var(--muted); font-size: 15px; }
+
+    .card {
+      background: rgba(255,255,255,.96);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: clamp(18px, 4vw, 26px);
+      backdrop-filter: blur(10px);
+    }
+
+    .label { display: block; font-size: 15px; font-weight: 700; margin-bottom: 9px; }
+    .search-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      height: 54px;
+      padding: 0 15px;
+      border: 1px solid #bfcfdd;
+      border-radius: 15px;
+      background: #fff;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 600;
+      outline: none;
+      transition: .2s ease;
+    }
+
+    input:focus { border-color: var(--primary-2); box-shadow: 0 0 0 4px rgba(22,119,200,.12); }
+    input::placeholder { color: #9aa9b6; font-weight: 400; }
+
+    .btn {
+      min-height: 48px;
+      border: 0;
+      border-radius: 14px;
+      padding: 0 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s ease, opacity .15s ease, box-shadow .15s ease;
+    }
+
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: .58; cursor: wait; }
+    .btn-primary { min-width: 104px; color: #fff; background: var(--primary); box-shadow: 0 7px 18px rgba(15,76,129,.18); }
+    .btn-copy { min-height: 38px; color: var(--primary); background: #e6f2fc; padding-inline: 12px; }
+    .btn-all { color: var(--primary); background: var(--primary-soft); }
+
+    .hint { margin-top: 9px; font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+    .message {
+      display: none;
+      margin-top: 15px;
+      padding: 12px 14px;
+      border-radius: 13px;
+      background: var(--danger-soft);
+      color: var(--danger);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .message.info { background: #eef6ff; color: #245a86; }
+
+    .result { display: none; margin-top: 18px; }
+
+    .student-head {
+      padding: 4px 2px 15px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid #e8eef4;
+    }
+
+    .student-name { font-size: 19px; font-weight: 800; line-height: 1.45; }
+    .student-meta { margin-top: 4px; color: var(--muted); font-size: 13px; }
+
+    .field {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) auto;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 0;
+      padding: 13px 14px;
+      border-radius: 15px;
+      background: var(--bg);
+      border: 1px solid #e8f0f6;
+    }
+
+    .field-label { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+    .field-value { font-family: Consolas, "SFMono-Regular", monospace; font-size: 17px; font-weight: 800; word-break: break-all; letter-spacing: .15px; }
+
+    .password-row { display: flex; align-items: center; gap: 8px; }
+    .eye-btn { border: 0; background: transparent; cursor: pointer; color: var(--muted); padding: 3px; display: grid; place-items: center; }
+    .eye-btn svg { width: 19px; height: 19px; }
+
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+
+    .exam-link {
+      min-height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 0 14px;
+      background: var(--success);
+      color: #fff;
+      font-weight: 800;
+      text-decoration: none;
+      box-shadow: 0 7px 18px rgba(8,116,67,.16);
+    }
+
+    .copy-status { min-height: 20px; margin-top: 11px; text-align: center; color: var(--success); font-size: 13px; font-weight: 700; }
+
+    .privacy {
+      margin: 16px 2px 0;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--success-soft);
+      color: #25613f;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    footer { margin-top: 18px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+    .spinner {
+      width: 17px; height: 17px; display: inline-block; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; vertical-align: -3px; margin-right: 5px; animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 480px) {
+      .page { width: min(100% - 22px, 620px); padding-top: 24px; }
+      .brand-mark { width: 64px; height: 64px; border-radius: 19px; }
+      .brand-mark svg { width: 31px; height: 31px; }
+      .search-row, .actions { grid-template-columns: 1fr; }
+      .btn-primary { width: 100%; height: 50px; }
+      .field { padding: 12px; }
+      .field-value { font-size: 16px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="10" width="14" height="10" rx="2"></rect>
+          <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+          <circle cx="12" cy="15" r="1.2"></circle>
+        </svg>
+      </div>
+      <h1>ระบบค้นหารหัสสอบออนไลน์</h1>
+      <div class="school">Oxford English Testing • โรงเรียนเซนต์เทเรซา หนองจอก</div>
+    </header>
+
+    <section class="card" aria-labelledby="searchTitle">
+      <label class="label" id="searchTitle" for="studentId">รหัสประจำตัวนักเรียน</label>
+      <div class="search-row">
+        <input id="studentId" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="เช่น 14547" aria-describedby="searchHint">
+        <button id="searchBtn" class="btn btn-primary" type="button">ค้นหา</button>
+      </div>
+      <div class="hint" id="searchHint">กรอกรหัสประจำตัวนักเรียนของตนเอง ระบบจะแสดงข้อมูลเฉพาะรหัสที่ค้นหา</div>
+
+      <div id="message" class="message" role="alert"></div>
+
+      <div id="result" class="result" aria-live="polite">
+        <div class="student-head">
+          <div id="studentName" class="student-name"></div>
+          <div id="studentMeta" class="student-meta"></div>
+        </div>
+
+        <div class="field">
+          <div>
+            <div class="field-label">Organisation ID</div>
+            <div id="orgId" class="field-value"></div>
+          </div>
+          <button class="btn btn-copy" type="button" data-copy="orgId">คัดลอก</button>
+        </div>
+
+        <div class="field">
+          <div>
+            <div class="field-label">Username</div>
+            <div id="username" class="field-value"></div>
+          </div>
+          <button class="btn btn-copy" type="button" data-copy="username">คัดลอก</button>
+        </div>
+
+        <div class="field">
+          <div>
+            <div class="field-label">Password</div>
+            <div class="password-row">
+              <div id="password" class="field-value" data-value=""></div>
+              <button id="togglePassword" class="eye-btn" type="button" aria-label="ซ่อนหรือแสดงรหัสผ่าน" title="ซ่อน/แสดงรหัสผ่าน">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
+              </button>
+            </div>
+          </div>
+          <button class="btn btn-copy" type="button" data-copy="password">คัดลอก</button>
+        </div>
+
+        <div class="actions">
+          <button id="copyAll" class="btn btn-all" type="button">คัดลอก Username + Password</button>
+          <a id="examLink" class="exam-link" href="https://www.oxfordenglishtesting.com" target="_blank" rel="noopener noreferrer">เข้าสู่ระบบสอบ</a>
+        </div>
+
+        <div id="copyStatus" class="copy-status"></div>
+      </div>
+
+      <div class="privacy">ข้อมูล Username และ Password ไม่ได้ถูกบันทึกไว้ใน GitHub หน้านี้จะขอข้อมูลจากระบบฐานข้อมูลเฉพาะเมื่อมีการค้นหารหัสนักเรียนเท่านั้น</div>
+    </section>
+
+    <footer>Oxford English Testing • Organisation ID 103713<br>สำหรับนักเรียนชั้นมัธยมศึกษาปีที่ 5 โรงเรียนเซนต์เทเรซา หนองจอก</footer>
+  </main>
+
+  <script src="config.js"></script>
+  <script>
+    const els = {
+      input: document.getElementById('studentId'),
+      btn: document.getElementById('searchBtn'),
+      message: document.getElementById('message'),
+      result: document.getElementById('result'),
+      name: document.getElementById('studentName'),
+      meta: document.getElementById('studentMeta'),
+      org: document.getElementById('orgId'),
+      user: document.getElementById('username'),
+      pass: document.getElementById('password'),
+      copyAll: document.getElementById('copyAll'),
+      copyStatus: document.getElementById('copyStatus'),
+      examLink: document.getElementById('examLink'),
+      togglePassword: document.getElementById('togglePassword')
+    };
+
+    let current = null;
+    let passwordVisible = true;
+    let jsonpScript = null;
+    let jsonpTimer = null;
+
+    function setLoading(isLoading) {
+      els.btn.disabled = isLoading;
+      els.btn.innerHTML = isLoading ? '<span class="spinner"></span>กำลังค้นหา' : 'ค้นหา';
+    }
+
+    function showMessage(text, type = 'error') {
+      els.message.textContent = text;
+      els.message.className = 'message' + (type === 'info' ? ' info' : '');
+      els.message.style.display = 'block';
+    }
+
+    function hideMessage() { els.message.style.display = 'none'; }
+
+    function maskPassword() {
+      const value = els.pass.dataset.value || '';
+      els.pass.textContent = passwordVisible ? value : '•'.repeat(Math.max(8, value.length));
+    }
+
+    function renderResult(data) {
+      current = data;
+      passwordVisible = true;
+      els.name.textContent = data.name || `รหัสนักเรียน ${data.studentId || ''}`;
+      els.meta.textContent = [data.room, data.studentNo ? `Student ${data.studentNo}` : '', data.studentId ? `รหัส ${data.studentId}` : ''].filter(Boolean).join(' • ');
+      els.org.textContent = data.orgId || '103713';
+      els.user.textContent = data.username || '';
+      els.pass.dataset.value = data.password || '';
+      maskPassword();
+      els.examLink.href = data.examUrl || 'https://www.oxfordenglishtesting.com';
+      els.result.style.display = 'block';
+    }
+
+    function cleanupJsonp() {
+      if (jsonpTimer) clearTimeout(jsonpTimer);
+      jsonpTimer = null;
+      if (jsonpScript && jsonpScript.parentNode) jsonpScript.parentNode.removeChild(jsonpScript);
+      jsonpScript = null;
+      try { delete window.__studentLookupCallback; } catch (_) { window.__studentLookupCallback = undefined; }
+    }
+
+    function lookupByJsonp(studentId) {
+      return new Promise((resolve, reject) => {
+        if (!window.APP_CONFIG || !APP_CONFIG.apiUrl || APP_CONFIG.apiUrl.includes('PASTE_')) {
+          reject(new Error('ระบบฐานข้อมูลยังไม่ได้ตั้งค่า Web App URL'));
+          return;
+        }
+
+        cleanupJsonp();
+        window.__studentLookupCallback = (payload) => {
+          cleanupJsonp();
+          resolve(payload);
+        };
+
+        const url = new URL(APP_CONFIG.apiUrl);
+        url.searchParams.set('id', studentId);
+        url.searchParams.set('callback', '__studentLookupCallback');
+        url.searchParams.set('_', Date.now().toString());
+
+        jsonpScript = document.createElement('script');
+        jsonpScript.src = url.toString();
+        jsonpScript.onerror = () => { cleanupJsonp(); reject(new Error('ไม่สามารถเชื่อมต่อฐานข้อมูลได้')); };
+        document.body.appendChild(jsonpScript);
+
+        jsonpTimer = setTimeout(() => {
+          cleanupJsonp();
+          reject(new Error('การเชื่อมต่อฐานข้อมูลใช้เวลานานเกินไป กรุณาลองใหม่'));
+        }, 12000);
+      });
+    }
+
+    async function searchStudent() {
+      const studentId = els.input.value.trim();
+      hideMessage();
+      els.result.style.display = 'none';
+      els.copyStatus.textContent = '';
+      current = null;
+
+      if (!studentId) { showMessage('กรุณากรอกรหัสประจำตัวนักเรียน'); return; }
+      if (!/^\d{3,20}$/.test(studentId)) { showMessage('กรุณากรอกรหัสประจำตัวนักเรียนเป็นตัวเลข'); return; }
+
+      setLoading(true);
+      try {
+        const data = await lookupByJsonp(studentId);
+        if (!data || !data.found) {
+          showMessage(data?.message || 'ไม่พบข้อมูล กรุณาตรวจสอบรหัสประจำตัวนักเรียนอีกครั้ง');
+          return;
+        }
+        renderResult(data);
+      } catch (error) {
+        showMessage(error?.message || 'เกิดข้อผิดพลาดในการค้นหาข้อมูล');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (_) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      els.copyStatus.textContent = 'คัดลอกแล้ว ✓';
+      setTimeout(() => { els.copyStatus.textContent = ''; }, 1600);
+    }
+
+    document.querySelectorAll('[data-copy]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.copy;
+        if (target === 'password') return copyText(els.pass.dataset.value || '');
+        const el = document.getElementById(target);
+        copyText(el?.textContent || '');
+      });
+    });
+
+    els.copyAll.addEventListener('click', () => {
+      if (!current) return;
+      copyText(`Org ID: ${current.orgId || '103713'}\nUsername: ${current.username}\nPassword: ${current.password}`);
+    });
+
+    els.togglePassword.addEventListener('click', () => {
+      passwordVisible = !passwordVisible;
+      maskPassword();
+    });
+
+    els.btn.addEventListener('click', searchStudent);
+    els.input.addEventListener('keydown', (event) => { if (event.key === 'Enter') searchStudent(); });
+  </script>
+</body>
+</html>

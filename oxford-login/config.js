@@ -1,0 +1,3 @@
+window.APP_CONFIG = {
+  apiUrl: 'PASTE_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE'
+};
